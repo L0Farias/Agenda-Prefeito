@@ -12,12 +12,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.exemplo.agendaprefeito",
       "infoPlist": {
-        "NSCameraUsageDescription": "Usamos a câmera para tirar a foto do perfil do prefeito.",
-        "NSPhotoLibraryUsageDescription": "Usamos a galeria para escolher a foto do perfil do prefeito e salvar fotos tiradas no app.",
-        "NSLocationWhenInUseUsageDescription": "Usamos sua localização para marcar automaticamente onde é cada compromisso da agenda.",
-        "NSFaceIDUsageDescription": "Use o Face ID para entrar no app com segurança."
-      },
-
+        "NSCameraUsageDescription": "Usamos a camera para tirar fotos dos compromissos e do perfil do prefeito.",
+        "NSPhotoLibraryUsageDescription": "Usamos a galeria para escolher fotos dos compromissos e do perfil.",
+        "NSLocationWhenInUseUsageDescription": "Usamos sua localizacao para marcar automaticamente onde e cada compromisso da agenda.",
+        "NSFaceIDUsageDescription": "Use o Face ID para entrar no app com seguranca."
+      }
     },
     "android": {
       "package": "com.exemplo.agendaprefeito",
@@ -29,14 +28,13 @@
         "ACCESS_COARSE_LOCATION",
         "USE_BIOMETRIC",
         "USE_FINGERPRINT"
-      ],
-
+      ]
     },
     "plugins": [
       [
         "expo-camera",
         {
-          "cameraPermission": "Permitir que o app use a câmera para a foto do prefeito."
+          "cameraPermission": "Permitir que o app use a camera para fotos dos compromissos e do prefeito."
         }
       ],
       [
@@ -48,13 +46,13 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Permitir que o app use sua localização para os compromissos da agenda."
+          "locationWhenInUsePermission": "Permitir que o app use sua localizacao para os compromissos da agenda."
         }
       ],
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Permitir autenticação por Face ID."
+          "faceIDPermission": "Permitir autenticacao por Face ID."
         }
       ]
     ]
