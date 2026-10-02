@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { StyleSheet, View, Alert, Switch, Image, Pressable } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
-import { Ionicons } from "@expo/vector-icons";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { ThemedButton } from "./ThemedButton";
@@ -20,8 +19,10 @@ interface Props {
 }
 
 async function copiarParaPermanente(uriTemporario: string): Promise<string> {
+  const dir = FileSystem.documentDirectory;
+  if (!dir) throw new Error("documentDirectory indisponivel");
   const nomeArquivo = "foto_compromisso_" + Date.now() + ".jpg";
-  const destino = FileSystem.documentDirectory + nomeArquivo;
+  const destino = dir + nomeArquivo;
   await FileSystem.copyAsync({ from: uriTemporario, to: destino });
   return destino;
 }
@@ -43,35 +44,43 @@ export function FormularioCompromisso({
   const [fotoUri, setFotoUri] = useState<string | null>(valoresIniciais?.fotoUri ?? null);
 
   async function escolherDaGaleria() {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert("Permissao necessaria", "Autorize o acesso a galeria para adicionar fotos.");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.7,
-    });
-    if (!result.canceled) {
-      const uri = await copiarParaPermanente(result.assets[0].uri);
-      setFotoUri(uri);
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert("Permissao necessaria", "Autorize o acesso a galeria nas configuracoes do dispositivo.");
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"] as any,
+        allowsEditing: true,
+        quality: 0.7,
+      });
+      if (!result.canceled && result.assets.length > 0) {
+        const uri = await copiarParaPermanente(result.assets[0].uri);
+        setFotoUri(uri);
+      }
+    } catch (e: any) {
+      Alert.alert("Erro", "Nao foi possivel acessar a galeria: " + (e?.message ?? ""));
     }
   }
 
   async function tirarFoto() {
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert("Permissao necessaria", "Autorize o uso da camera para tirar fotos.");
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      quality: 0.7,
-    });
-    if (!result.canceled) {
-      const uri = await copiarParaPermanente(result.assets[0].uri);
-      setFotoUri(uri);
+    try {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert("Permissao necessaria", "Autorize o uso da camera nas configuracoes do dispositivo.");
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        quality: 0.7,
+      });
+      if (!result.canceled && result.assets.length > 0) {
+        const uri = await copiarParaPermanente(result.assets[0].uri);
+        setFotoUri(uri);
+      }
+    } catch (e: any) {
+      Alert.alert("Erro", "Nao foi possivel acessar a camera: " + (e?.message ?? ""));
     }
   }
 
@@ -80,16 +89,15 @@ export function FormularioCompromisso({
   }
 
   function mostrarOpcoesFoto() {
-    Alert.alert(
-      "Foto do compromisso",
-      "Como deseja adicionar a foto?",
-      [
-        { text: "Tirar foto", onPress: tirarFoto },
-        { text: "Escolher da galeria", onPress: escolherDaGaleria },
-        fotoUri ? { text: "Remover foto", style: "destructive", onPress: removerFoto } : null,
-        { text: "Cancelar", style: "cancel" },
-      ].filter(Boolean) as any
-    );
+    const botoes: any[] = [
+      { text: "Tirar foto", onPress: tirarFoto },
+      { text: "Escolher da galeria", onPress: escolherDaGaleria },
+    ];
+    if (fotoUri) {
+      botoes.push({ text: "Remover foto", style: "destructive", onPress: removerFoto });
+    }
+    botoes.push({ text: "Cancelar", style: "cancel" });
+    Alert.alert("Foto do compromisso", "Como deseja adicionar a foto?", botoes);
   }
 
   function validarEEnviar() {
@@ -149,7 +157,6 @@ export function FormularioCompromisso({
         placeholder="Ex: Praca Central"
       />
 
-      {/* Secao de foto */}
       <ThemedText variante="legenda">Foto (opcional)</ThemedText>
       {fotoUri ? (
         <Pressable onPress={mostrarOpcoesFoto}>
@@ -164,18 +171,8 @@ export function FormularioCompromisso({
         </Pressable>
       ) : (
         <View style={estilos.botoesFoto}>
-          <ThemedButton
-            titulo="Tirar foto"
-            variante="secundario"
-            onPress={tirarFoto}
-            style={{ flex: 1 }}
-          />
-          <ThemedButton
-            titulo="Da galeria"
-            variante="secundario"
-            onPress={escolherDaGaleria}
-            style={{ flex: 1 }}
-          />
+          <ThemedButton titulo="Tirar foto" variante="secundario" onPress={tirarFoto} style={{ flex: 1 }} />
+          <ThemedButton titulo="Da galeria" variante="secundario" onPress={escolherDaGaleria} style={{ flex: 1 }} />
         </View>
       )}
 
@@ -184,8 +181,7 @@ export function FormularioCompromisso({
           <View style={{ flex: 1 }}>
             <ThemedText variante="corpo">Marcar localizacao atual</ThemedText>
             <ThemedText variante="legenda">
-              Usa o GPS do celular para salvar as coordenadas deste
-              compromisso e mostra-lo no mapa.
+              Usa o GPS do celular para salvar as coordenadas deste compromisso e mostra-lo no mapa.
             </ThemedText>
           </View>
           <Switch
@@ -208,16 +204,8 @@ const estilos = StyleSheet.create({
   container: { gap: 12 },
   linhaDupla: { flexDirection: "row", gap: 12 },
   campoMetade: { flex: 1 },
-  fotoPreview: {
-    width: "100%",
-    height: 180,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  botoesFoto: {
-    flexDirection: "row",
-    gap: 10,
-  },
+  fotoPreview: { width: "100%", height: 180, borderRadius: 10, borderWidth: 1 },
+  botoesFoto: { flexDirection: "row", gap: 10 },
   linhaSwitch: {
     flexDirection: "row",
     alignItems: "center",
@@ -226,10 +214,5 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
   },
-  linhaBotoes: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 12,
-    marginTop: 4,
-  },
+  linhaBotoes: { flexDirection: "row", justifyContent: "flex-end", gap: 12, marginTop: 4 },
 });

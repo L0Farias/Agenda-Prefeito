@@ -18,6 +18,23 @@ export function PerfilScreen() {
   const [editando, setEditando] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
+  // Barra de tema e sair — aparece SEMPRE, independente do estado do perfil
+  function BarraInferior() {
+    return (
+      <ThemedView style={[estilos.barraInferior, { borderColor: paleta.borda }]}>
+        <View style={estilos.linhaConfig}>
+          <ThemedText variante="corpo">Tema escuro</ThemedText>
+          <Switch
+            value={tema === "dark"}
+            onValueChange={alternarTema}
+            trackColor={{ true: paleta.primaria }}
+          />
+        </View>
+        <ThemedButton titulo="Sair" variante="perigo" onPress={sair} />
+      </ThemedView>
+    );
+  }
+
   if (carregando) {
     return (
       <ThemedView style={estilos.centralizado}>
@@ -38,54 +55,47 @@ export function PerfilScreen() {
 
   if (!cadastrado || editando) {
     return (
-      <ScrollView contentContainerStyle={estilos.scroll}>
-        <FormularioPrefeito
-          valoresIniciais={prefeito ?? PREFEITO_VAZIO}
-          salvando={salvando}
-          onSalvar={lidarComSalvar}
-          onCancelar={cadastrado ? () => setEditando(false) : undefined}
-        />
-      </ScrollView>
+      <ThemedView style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={[estilos.scroll, { paddingBottom: insets.bottom + 16 }]}>
+          <FormularioPrefeito
+            valoresIniciais={prefeito ?? PREFEITO_VAZIO}
+            salvando={salvando}
+            onSalvar={lidarComSalvar}
+            onCancelar={cadastrado ? () => setEditando(false) : undefined}
+          />
+        </ScrollView>
+        <BarraInferior />
+      </ThemedView>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={[estilos.scroll, { paddingBottom: insets.bottom + 24 }]}>
-      <ThemedView style={estilos.cabecalho}>
-        {prefeito!.fotoUri ? (
-          <Image source={{ uri: prefeito!.fotoUri }} style={estilos.foto} />
-        ) : (
-          <View style={[estilos.foto, estilos.fotoPlaceholder, { borderColor: paleta.borda }]}>
-            <ThemedText variante="legenda">Sem foto</ThemedText>
-          </View>
-        )}
-        <ThemedText variante="titulo">{prefeito!.nome}</ThemedText>
-        <ThemedText variante="corpo">{prefeito!.cargo}</ThemedText>
-        <ThemedText variante="legenda">{prefeito!.cidade}</ThemedText>
-      </ThemedView>
+    <ThemedView style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={[estilos.scroll, { paddingBottom: 8 }]}>
+        <ThemedView style={estilos.cabecalho}>
+          {prefeito!.fotoUri ? (
+            <Image source={{ uri: prefeito!.fotoUri }} style={estilos.foto} />
+          ) : (
+            <View style={[estilos.foto, estilos.fotoPlaceholder, { borderColor: paleta.borda }]}>
+              <ThemedText variante="legenda">Sem foto</ThemedText>
+            </View>
+          )}
+          <ThemedText variante="titulo">{prefeito!.nome}</ThemedText>
+          <ThemedText variante="corpo">{prefeito!.cargo}</ThemedText>
+          <ThemedText variante="legenda">{prefeito!.cidade}</ThemedText>
+        </ThemedView>
 
-      <ThemedView variante="cartao" style={[estilos.dados, { borderColor: paleta.borda }]}>
-        <LinhaDado rotulo="Partido" valor={prefeito!.partido || "---"} />
-        <LinhaDado rotulo="Telefone" valor={prefeito!.telefone || "---"} />
-        <LinhaDado rotulo="E-mail" valor={prefeito!.email || "---"} />
-      </ThemedView>
+        <ThemedView variante="cartao" style={[estilos.dados, { borderColor: paleta.borda }]}>
+          <LinhaDado rotulo="Partido" valor={prefeito!.partido || "---"} />
+          <LinhaDado rotulo="Telefone" valor={prefeito!.telefone || "---"} />
+          <LinhaDado rotulo="E-mail" valor={prefeito!.email || "---"} />
+        </ThemedView>
 
-      <ThemedButton titulo="Editar dados" variante="secundario" onPress={() => setEditando(true)} />
+        <ThemedButton titulo="Editar dados" variante="secundario" onPress={() => setEditando(true)} />
+      </ScrollView>
 
-      <ThemedView
-        variante="cartao"
-        style={[estilos.linhaConfig, { borderColor: paleta.borda }]}
-      >
-        <ThemedText variante="corpo">Tema escuro</ThemedText>
-        <Switch
-          value={tema === "dark"}
-          onValueChange={alternarTema}
-          trackColor={{ true: paleta.primaria }}
-        />
-      </ThemedView>
-
-      <ThemedButton titulo="Sair" variante="perigo" onPress={sair} />
-    </ScrollView>
+      <BarraInferior />
+    </ThemedView>
   );
 }
 
@@ -99,7 +109,7 @@ function LinhaDado({ rotulo, valor }: { rotulo: string; valor: string }) {
 }
 
 const estilos = StyleSheet.create({
-  scroll: { padding: 16, gap: 14, paddingBottom: 40 },
+  scroll: { padding: 16, gap: 14 },
   centralizado: { flex: 1, justifyContent: "center", alignItems: "center" },
   cabecalho: { alignItems: "center", gap: 4 },
   foto: { width: 110, height: 110, borderRadius: 55, marginBottom: 8 },
@@ -111,12 +121,14 @@ const estilos = StyleSheet.create({
   },
   dados: { borderWidth: 1, borderRadius: 12, padding: 4 },
   linhaDado: { paddingHorizontal: 12, paddingVertical: 8, gap: 2 },
+  barraInferior: {
+    padding: 16,
+    gap: 12,
+    borderTopWidth: 1,
+  },
   linhaConfig: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
   },
 });
