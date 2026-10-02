@@ -1,7 +1,9 @@
 import * as SQLite from "expo-sqlite";
 import { Compromisso, NovoCompromisso, Usuario } from "@/types";
 
-const SCHEMA_VERSION = 2;
+// v2: biometriaHabilitada em usuarios
+// v3: fotoUri em compromissos
+const SCHEMA_VERSION = 3;
 
 const db = SQLite.openDatabaseSync("agenda-prefeito.db");
 
@@ -11,7 +13,7 @@ export function inicializarBanco(): void {
   );
   const versaoAtual = resultado?.user_version ?? 0;
 
-  // Sempre garante WAL mode e cria tabelas se nao existirem
+  // Cria tabelas se nao existirem (schema completo atual)
   db.execSync(`
     PRAGMA journal_mode = WAL;
 
@@ -24,6 +26,7 @@ export function inicializarBanco(): void {
       local TEXT NOT NULL,
       latitude REAL,
       longitude REAL,
+      fotoUri TEXT,
       criadoEm TEXT NOT NULL
     );
 
@@ -36,16 +39,19 @@ export function inicializarBanco(): void {
     );
   `);
 
-  // Migration: adiciona coluna biometriaHabilitada se banco foi criado
-  // antes da versao 2 (nao tinha essa coluna).
-  if (versaoAtual < SCHEMA_VERSION) {
+  // Migrations incrementais para bancos existentes
+  if (versaoAtual < 2) {
     try {
-      db.execSync(
-        "ALTER TABLE usuarios ADD COLUMN biometriaHabilitada INTEGER DEFAULT 0;"
-      );
-    } catch {
-      // Coluna ja existe, ignorar.
-    }
+      db.execSync("ALTER TABLE usuarios ADD COLUMN biometriaHabilitada INTEGER DEFAULT 0;");
+    } catch { /* ja existe */ }
+  }
+  if (versaoAtual < 3) {
+    try {
+      db.execSync("ALTER TABLE compromissos ADD COLUMN fotoUri TEXT;");
+    } catch { /* ja existe */ }
+  }
+
+  if (versaoAtual < SCHEMA_VERSION) {
     db.runSync("PRAGMA user_version = " + SCHEMA_VERSION + ";");
   }
 }
@@ -59,8 +65,8 @@ export function listarCompromissos(): Compromisso[] {
 export function inserirCompromisso(compromisso: NovoCompromisso): void {
   db.runSync(
     `INSERT INTO compromissos
-      (titulo, descricao, data, hora, local, latitude, longitude, criadoEm)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+      (titulo, descricao, data, hora, local, latitude, longitude, fotoUri, criadoEm)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       compromisso.titulo,
       compromisso.descricao ?? "",
@@ -69,6 +75,7 @@ export function inserirCompromisso(compromisso: NovoCompromisso): void {
       compromisso.local,
       compromisso.latitude ?? null,
       compromisso.longitude ?? null,
+      compromisso.fotoUri ?? null,
       new Date().toISOString(),
     ]
   );
@@ -80,9 +87,9 @@ export function atualizarCompromisso(
 ): void {
   db.runSync(
     `UPDATE compromissos
-     SET titulo = ?, descricao = ?, data = ?, hora = ?, local = ?
+     SET titulo = ?, descricao = ?, data = ?, hora = ?, local = ?, fotoUri = ?
      WHERE id = ?;`,
-    [dados.titulo, dados.descricao ?? "", dados.data, dados.hora, dados.local, id]
+    [dados.titulo, dados.descricao ?? "", dados.data, dados.hora, dados.local, dados.fotoUri ?? null, id]
   );
 }
 

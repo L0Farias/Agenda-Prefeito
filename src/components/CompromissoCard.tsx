@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemedView } from "./ThemedView";
@@ -21,7 +21,17 @@ export function CompromissoCard({ compromisso, onEditar, onExcluir }: Props) {
       variante="cartao"
       style={[estilos.cartao, { borderColor: paleta.borda }]}
     >
-      <ThemedText variante="titulo" style={{ flexShrink: 1 }}>{compromisso.titulo}</ThemedText>
+      {compromisso.fotoUri && (
+        <Image
+          source={{ uri: compromisso.fotoUri }}
+          style={estilos.foto}
+          resizeMode="cover"
+        />
+      )}
+
+      <ThemedText variante="titulo" style={{ flexShrink: 1 }}>
+        {compromisso.titulo}
+      </ThemedText>
 
       <View style={estilos.linhaInfo}>
         <Ionicons name="calendar-outline" size={16} color={paleta.textoSecundario} />
@@ -32,7 +42,9 @@ export function CompromissoCard({ compromisso, onEditar, onExcluir }: Props) {
 
       <View style={estilos.linhaInfo}>
         <Ionicons name="location-outline" size={16} color={paleta.textoSecundario} />
-        <ThemedText variante="corpo" style={{ flexShrink: 1, flexWrap: "wrap" }}>{compromisso.local}</ThemedText>
+        <ThemedText variante="corpo" style={{ flexShrink: 1, flexWrap: "wrap" }}>
+          {compromisso.local}
+        </ThemedText>
       </View>
 
       {!!compromisso.descricao && (
@@ -57,6 +69,12 @@ export function CompromissoCard({ compromisso, onEditar, onExcluir }: Props) {
 
 const estilos = StyleSheet.create({
   cartao: { borderWidth: 1, borderRadius: 12, padding: 14, gap: 8, marginBottom: 12 },
+  foto: {
+    width: "100%",
+    height: 160,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
   linhaInfo: { flexDirection: "row", alignItems: "center", gap: 6 },
   linhaBotoes: { flexDirection: "row", gap: 10, marginTop: 6 },
 });

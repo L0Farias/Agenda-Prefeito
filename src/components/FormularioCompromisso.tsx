@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Alert, Switch } from "react-native";
+import { StyleSheet, View, Alert, Switch, Image, Pressable } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import { Ionicons } from "@expo/vector-icons";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { ThemedButton } from "./ThemedButton";
@@ -16,6 +19,13 @@ interface Props {
   onCancelar: () => void;
 }
 
+async function copiarParaPermanente(uriTemporario: string): Promise<string> {
+  const nomeArquivo = "foto_compromisso_" + Date.now() + ".jpg";
+  const destino = FileSystem.documentDirectory + nomeArquivo;
+  await FileSystem.copyAsync({ from: uriTemporario, to: destino });
+  return destino;
+}
+
 export function FormularioCompromisso({
   valoresIniciais,
   salvando = false,
@@ -30,13 +40,64 @@ export function FormularioCompromisso({
   const [data, setData] = useState(valoresIniciais?.data ?? "");
   const [hora, setHora] = useState(valoresIniciais?.hora ?? "");
   const [local, setLocal] = useState(valoresIniciais?.local ?? "");
+  const [fotoUri, setFotoUri] = useState<string | null>(valoresIniciais?.fotoUri ?? null);
+
+  async function escolherDaGaleria() {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert("Permissao necessaria", "Autorize o acesso a galeria para adicionar fotos.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7,
+    });
+    if (!result.canceled) {
+      const uri = await copiarParaPermanente(result.assets[0].uri);
+      setFotoUri(uri);
+    }
+  }
+
+  async function tirarFoto() {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert("Permissao necessaria", "Autorize o uso da camera para tirar fotos.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.7,
+    });
+    if (!result.canceled) {
+      const uri = await copiarParaPermanente(result.assets[0].uri);
+      setFotoUri(uri);
+    }
+  }
+
+  function removerFoto() {
+    setFotoUri(null);
+  }
+
+  function mostrarOpcoesFoto() {
+    Alert.alert(
+      "Foto do compromisso",
+      "Como deseja adicionar a foto?",
+      [
+        { text: "Tirar foto", onPress: tirarFoto },
+        { text: "Escolher da galeria", onPress: escolherDaGaleria },
+        fotoUri ? { text: "Remover foto", style: "destructive", onPress: removerFoto } : null,
+        { text: "Cancelar", style: "cancel" },
+      ].filter(Boolean) as any
+    );
+  }
 
   function validarEEnviar() {
     if (!titulo.trim() || !data.trim() || !hora.trim() || !local.trim()) {
       Alert.alert("Atencao", "Preencha titulo, data, hora e local do compromisso.");
       return;
     }
-    onSalvar({ titulo, descricao, data, hora, local });
+    onSalvar({ titulo, descricao, data, hora, local, fotoUri });
   }
 
   return (
@@ -88,6 +149,36 @@ export function FormularioCompromisso({
         placeholder="Ex: Praca Central"
       />
 
+      {/* Secao de foto */}
+      <ThemedText variante="legenda">Foto (opcional)</ThemedText>
+      {fotoUri ? (
+        <Pressable onPress={mostrarOpcoesFoto}>
+          <Image
+            source={{ uri: fotoUri }}
+            style={[estilos.fotoPreview, { borderColor: paleta.borda }]}
+            resizeMode="cover"
+          />
+          <ThemedText variante="legenda" style={{ textAlign: "center", marginTop: 4 }}>
+            Toque para alterar ou remover
+          </ThemedText>
+        </Pressable>
+      ) : (
+        <View style={estilos.botoesFoto}>
+          <ThemedButton
+            titulo="Tirar foto"
+            variante="secundario"
+            onPress={tirarFoto}
+            style={{ flex: 1 }}
+          />
+          <ThemedButton
+            titulo="Da galeria"
+            variante="secundario"
+            onPress={escolherDaGaleria}
+            style={{ flex: 1 }}
+          />
+        </View>
+      )}
+
       {!valoresIniciais && (
         <View style={[estilos.linhaSwitch, { borderColor: paleta.borda }]}>
           <View style={{ flex: 1 }}>
@@ -117,6 +208,16 @@ const estilos = StyleSheet.create({
   container: { gap: 12 },
   linhaDupla: { flexDirection: "row", gap: 12 },
   campoMetade: { flex: 1 },
+  fotoPreview: {
+    width: "100%",
+    height: 180,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  botoesFoto: {
+    flexDirection: "row",
+    gap: 10,
+  },
   linhaSwitch: {
     flexDirection: "row",
     alignItems: "center",

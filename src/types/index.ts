@@ -24,11 +24,12 @@ export interface Compromisso {
   id: number;
   titulo: string;
   descricao: string;
-  data: string; // formato dd/mm/aaaa, digitado pelo usuário
-  hora: string; // formato hh:mm, digitado pelo usuário
-  local: string; // nome do local, digitado pelo usuário
+  data: string;
+  hora: string;
+  local: string;
   latitude: number | null;
   longitude: number | null;
+  fotoUri: string | null;
   criadoEm: string;
 }
 
@@ -40,13 +41,14 @@ export interface NovoCompromisso {
   local: string;
   latitude?: number | null;
   longitude?: number | null;
+  fotoUri?: string | null;
 }
 
 export interface Usuario {
   id: number;
   nomeUsuario: string;
   senhaHash: string;
-  criadoEm: string; // ISO 8601
+  criadoEm: string;
   biometriaHabilitada: boolean;
 }
 
