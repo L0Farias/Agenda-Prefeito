@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { StyleSheet, Image, View, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { useTheme } from "@/contexts/ThemeContext";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
@@ -41,7 +41,7 @@ export function FormularioPrefeito({
     if (!permissao.granted) return;
 
     const resultado = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"] as any,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.6,

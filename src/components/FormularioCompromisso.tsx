@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { StyleSheet, View, Alert, Switch, Image, Pressable } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { ThemedButton } from "./ThemedButton";
