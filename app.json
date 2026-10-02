@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "Agenda do Prefeito",
+    "slug": "agenda-prefeito",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.exemplo.agendaprefeito",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Usamos a câmera para tirar a foto do perfil do prefeito.",
+        "NSPhotoLibraryUsageDescription": "Usamos a galeria para escolher a foto do perfil do prefeito e salvar fotos tiradas no app.",
+        "NSLocationWhenInUseUsageDescription": "Usamos sua localização para marcar automaticamente onde é cada compromisso da agenda.",
+        "NSFaceIDUsageDescription": "Use o Face ID para entrar no app com segurança."
+      },
+
+    },
+    "android": {
+      "package": "com.exemplo.agendaprefeito",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ],
+
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permitir que o app use a câmera para a foto do prefeito."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir que o app acesse suas fotos."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permitir que o app use sua localização para os compromissos da agenda."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Permitir autenticação por Face ID."
+        }
+      ]
+    ]
+  }
+}
