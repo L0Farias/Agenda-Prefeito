@@ -4,8 +4,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import bcryptjs from "bcryptjs";
-import * as ExpoCrypto from "expo-crypto";
+import * as Crypto from "expo-crypto";
 import {
   inserirUsuario,
   buscarUsuarioPorNome,
@@ -18,13 +17,35 @@ import {
   autenticarComBiometria,
 } from "@/services/biometrics";
 
-// Configura o bcryptjs para usar expo-crypto como fonte de aleatoriedade.
-// Necessario porque o Hermes (engine JS do React Native) nao expoe
-// o modulo 'crypto' do Node nem a Web Crypto API que o bcryptjs espera.
-bcryptjs.setRandomFallback((len: number) => {
-  const buf = ExpoCrypto.getRandomBytes(len);
-  return Array.from(buf);
-});
+// Gera um salt aleatorio de 16 bytes em hex (32 chars)
+function gerarSalt(): string {
+  const bytes = Crypto.getRandomBytes(16);
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// Gera hash SHA-256 de (salt + senha) e retorna "salt:hash"
+async function hashSenha(senha: string): Promise<string> {
+  const salt = gerarSalt();
+  const hash = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    salt + senha
+  );
+  return salt + ":" + hash;
+}
+
+// Verifica se a senha bate com o hash armazenado no formato "salt:hash"
+async function verificarSenha(senha: string, senhaHash: string): Promise<boolean> {
+  const partes = senhaHash.split(":");
+  if (partes.length !== 2) return false;
+  const [salt, hashEsperado] = partes;
+  const hashTentativa = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    salt + senha
+  );
+  return hashTentativa === hashEsperado;
+}
 
 export type CadastroResultado =
   | { sucesso: true }
@@ -68,7 +89,7 @@ export function UsuarioProvider({ children }: { children: React.ReactNode }) {
 
     setCarregando(true);
     try {
-      const senhaHash = await bcryptjs.hash(senha, 10);
+      const senhaHash = await hashSenha(senha);
       const criadoEm = new Date().toISOString();
       inserirUsuario(nomeUsuario, senhaHash, criadoEm);
       return { sucesso: true };
@@ -88,7 +109,7 @@ export function UsuarioProvider({ children }: { children: React.ReactNode }) {
       return {
         sucesso: false,
         erro: "db_indisponivel",
-        mensagem: "Erro: " + msg,
+        mensagem: "Erro ao salvar: " + msg,
       };
     } finally {
       setCarregando(false);
@@ -106,7 +127,7 @@ export function UsuarioProvider({ children }: { children: React.ReactNode }) {
       const usuario = buscarUsuarioPorNome(nomeUsuario);
       if (!usuario) return false;
 
-      const senhaValida = await bcryptjs.compare(senha, usuario.senhaHash);
+      const senhaValida = await verificarSenha(senha, usuario.senhaHash);
       if (senhaValida) {
         autenticarPorCredenciais();
         await salvarUltimoUsuario(nomeUsuario);

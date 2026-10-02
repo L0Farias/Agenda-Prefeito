@@ -1,6 +1,3 @@
-// Mocks globais para os testes Jest.
-// Simulam modulos nativos que so existem no celular.
-
 jest.mock("@react-native-async-storage/async-storage", () =>
   require("@react-native-async-storage/async-storage/jest/async-storage-mock")
 );
@@ -32,7 +29,8 @@ jest.mock("expo-location", () => ({
   Accuracy: { Balanced: 3 },
 }));
 
-// Mock do expo-crypto para que o bcryptjs funcione nos testes
 jest.mock("expo-crypto", () => ({
   getRandomBytes: jest.fn((len) => new Uint8Array(len).fill(42)),
+  digestStringAsync: jest.fn(() => Promise.resolve("fakehash123")),
+  CryptoDigestAlgorithm: { SHA256: "SHA-256", SHA512: "SHA-512" },
 }));

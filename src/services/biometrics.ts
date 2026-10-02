@@ -8,18 +8,15 @@ export async function dispositivoSuportaBiometria(): Promise<boolean> {
 
 export async function autenticarComBiometria(): Promise<boolean> {
   const suportado = await dispositivoSuportaBiometria();
-
   if (!suportado) {
-    // Em dispositivos sem biometria cadastrada (ou no emulador), permite
-    // seguir para não travar a demonstração do trabalho.
+    // Dispositivo sem biometria cadastrada: libera acesso direto
+    // para nao travar a demonstracao.
     return true;
   }
-
   const resultado = await LocalAuthentication.authenticateAsync({
     promptMessage: "Autentique-se para acessar a Agenda do Prefeito",
     fallbackLabel: "Usar senha do dispositivo",
     cancelLabel: "Cancelar",
   });
-
   return resultado.success;
 }
