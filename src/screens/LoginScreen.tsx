@@ -61,7 +61,10 @@ export function LoginScreen({ navigation }: Props) {
   async function lidarComLoginBiometrico() {
     const sucesso = await autenticarComBiometria();
     if (sucesso) {
-      autenticarPorCredenciais();
+      const ultimo = nomeUsuario.trim() || await obterUltimoUsuario();
+      if (ultimo) {
+        autenticarPorCredenciais(ultimo);
+      }
     }
   }
 
