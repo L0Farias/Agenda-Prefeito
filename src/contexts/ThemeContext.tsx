@@ -66,10 +66,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const paleta = tema === "light" ? paletaClara : paletaEscura;
 
-  const valor = useMemo(
-    () => ({ tema, paleta, alternarTema }),
-    [tema, paleta]
-  );
+  const valor = useMemo(() => ({ tema, paleta, alternarTema }), [tema, paleta]);
 
   return (
     <ThemeContext.Provider value={valor}>{children}</ThemeContext.Provider>

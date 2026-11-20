@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { listarCompromissos } from "@/database/database";
+import { useAuth } from "@/contexts/AuthContext";
 import { obterLocalizacaoAtual, Coordenadas } from "@/services/location";
 import { Compromisso } from "@/types";
 import LEAFLET_CSS from "./leafletCSS";
@@ -58,6 +59,7 @@ ${marcadores}
 }
 
 export function MapaScreen() {
+  const { usuarioAtual } = useAuth();
   const insets = useSafeAreaInsets();
   const [posicaoAtual, setPosicaoAtual] = useState<Coordenadas | null>(null);
   const [compromissos, setCompromissos] = useState<Compromisso[]>([]);
@@ -68,7 +70,7 @@ export function MapaScreen() {
       setErroWebView(false);
       obterLocalizacaoAtual().then(setPosicaoAtual);
       setCompromissos(
-        listarCompromissos().filter(
+        listarCompromissos(usuarioAtual ?? "").filter(
           (c) => c.latitude != null && c.longitude != null
         )
       );

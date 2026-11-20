@@ -3,9 +3,10 @@ import { autenticarComBiometria } from "@/services/biometrics";
 
 interface AuthContextData {
   autenticado: boolean;
+  usuarioAtual: string | null;
   carregando: boolean;
   entrar: () => Promise<boolean>;
-  autenticarPorCredenciais: () => void;
+  autenticarPorCredenciais: (nomeUsuario: string) => void;
   sair: () => void;
 }
 
@@ -13,6 +14,7 @@ const AuthContext = createContext<AuthContextData | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [autenticado, setAutenticado] = useState(false);
+  const [usuarioAtual, setUsuarioAtual] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
 
   const entrar = async (): Promise<boolean> => {
@@ -26,12 +28,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const autenticarPorCredenciais = () => setAutenticado(true);
-  const sair = () => setAutenticado(false);
+  const autenticarPorCredenciais = (nomeUsuario: string) => {
+    setUsuarioAtual(nomeUsuario);
+    setAutenticado(true);
+  };
+
+  const sair = () => {
+    setUsuarioAtual(null);
+    setAutenticado(false);
+  };
 
   const valor = useMemo(
-    () => ({ autenticado, carregando, entrar, autenticarPorCredenciais, sair }),
-    [autenticado, carregando]
+    () => ({ autenticado, usuarioAtual, carregando, entrar, autenticarPorCredenciais, sair }),
+    [autenticado, usuarioAtual, carregando]
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

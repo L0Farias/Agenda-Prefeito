@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { Prefeito, PREFEITO_VAZIO } from "@/types";
 import { obterPrefeito, salvarPrefeito } from "@/storage/storage";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PrefeitoContextData {
   prefeito: Prefeito | null;
@@ -15,24 +16,29 @@ interface PrefeitoContextData {
   salvarPerfil: (dados: Prefeito) => Promise<void>;
 }
 
-const PrefeitoContext = createContext<PrefeitoContextData | undefined>(
-  undefined
-);
+const PrefeitoContext = createContext<PrefeitoContextData | undefined>(undefined);
 
 export function PrefeitoProvider({ children }: { children: React.ReactNode }) {
+  const { usuarioAtual } = useAuth();
   const [prefeito, setPrefeito] = useState<Prefeito | null>(null);
   const [carregando, setCarregando] = useState(true);
 
-  // Ao abrir o app, busca o perfil salvo no AsyncStorage da vez anterior.
-  // É isso que garante que, ao sair e entrar no app, os dados continuam lá.
+  // Recarrega o perfil sempre que o usuario logado mudar
   useEffect(() => {
-    obterPrefeito()
+    if (!usuarioAtual) {
+      setPrefeito(null);
+      setCarregando(false);
+      return;
+    }
+    setCarregando(true);
+    obterPrefeito(usuarioAtual)
       .then((dados) => setPrefeito(dados))
       .finally(() => setCarregando(false));
-  }, []);
+  }, [usuarioAtual]);
 
   async function salvarPerfil(dados: Prefeito) {
-    await salvarPrefeito(dados);
+    if (!usuarioAtual) return;
+    await salvarPrefeito(usuarioAtual, dados);
     setPrefeito(dados);
   }
 

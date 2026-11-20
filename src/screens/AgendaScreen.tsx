@@ -15,10 +15,12 @@ import {
   removerCompromisso,
 } from "@/database/database";
 import { obterLocalizacaoAtual } from "@/services/location";
+import { useAuth } from "@/contexts/AuthContext";
 import { Compromisso, NovoCompromisso } from "@/types";
 
 export function AgendaScreen() {
   const insets = useSafeAreaInsets();
+  const { usuarioAtual } = useAuth();
   const [compromissos, setCompromissos] = useState<Compromisso[]>([]);
   const [modalAberto, setModalAberto] = useState(false);
   const [compromissoEmEdicao, setCompromissoEmEdicao] = useState<Compromisso | undefined>();
@@ -29,11 +31,12 @@ export function AgendaScreen() {
     useCallback(() => {
       inicializarBanco();
       carregar();
-    }, [])
+    }, [usuarioAtual])
   );
 
   function carregar() {
-    setCompromissos(listarCompromissos());
+    if (!usuarioAtual) return;
+    setCompromissos(listarCompromissos(usuarioAtual));
   }
 
   function abrirNovo() {
@@ -48,23 +51,21 @@ export function AgendaScreen() {
   }
 
   async function salvar(dados: NovoCompromisso) {
+    if (!usuarioAtual) return;
     setSalvando(true);
     try {
       if (compromissoEmEdicao) {
-        atualizarCompromisso(compromissoEmEdicao.id, dados);
+        atualizarCompromisso(compromissoEmEdicao.id, usuarioAtual, dados);
       } else {
         let latitude: number | null = null;
         let longitude: number | null = null;
-
         if (usarLocalizacaoAtual) {
           const coordenadas = await obterLocalizacaoAtual();
           latitude = coordenadas?.latitude ?? null;
           longitude = coordenadas?.longitude ?? null;
         }
-
-        inserirCompromisso({ ...dados, latitude, longitude });
+        inserirCompromisso(usuarioAtual, { ...dados, latitude, longitude });
       }
-
       setModalAberto(false);
       carregar();
     } finally {
@@ -73,7 +74,8 @@ export function AgendaScreen() {
   }
 
   function excluir(id: number) {
-    removerCompromisso(id);
+    if (!usuarioAtual) return;
+    removerCompromisso(id, usuarioAtual);
     carregar();
   }
 
@@ -82,7 +84,6 @@ export function AgendaScreen() {
       <ThemedView style={estilos.cabecalho}>
         <ThemedButton titulo="+ Novo compromisso" onPress={abrirNovo} />
       </ThemedView>
-
       <FlatList
         data={compromissos}
         keyExtractor={(item) => String(item.id)}
@@ -93,19 +94,14 @@ export function AgendaScreen() {
         ListEmptyComponent={
           <ThemedView style={estilos.vazio}>
             <ThemedText variante="legenda">
-              Nenhum compromisso cadastrado ainda. Toque em "+ Novo compromisso" para
-              adicionar o primeiro.
+              Nenhum compromisso cadastrado ainda. Toque em "+ Novo compromisso" para adicionar o primeiro.
             </ThemedText>
           </ThemedView>
         }
       />
-
       <Modal visible={modalAberto} animationType="slide" onRequestClose={() => setModalAberto(false)}>
         <ThemedView style={[estilos.modal, { paddingTop: insets.top }]}>
-          <ScrollView
-            contentContainerStyle={estilos.modalConteudo}
-            keyboardShouldPersistTaps="handled"
-          >
+          <ScrollView contentContainerStyle={estilos.modalConteudo} keyboardShouldPersistTaps="handled">
             <FormularioCompromisso
               valoresIniciais={compromissoEmEdicao}
               salvando={salvando}

@@ -17,7 +17,6 @@ import {
   autenticarComBiometria,
 } from "@/services/biometrics";
 
-// Gera um salt aleatorio de 16 bytes em hex (32 chars)
 function gerarSalt(): string {
   const bytes = Crypto.getRandomBytes(16);
   return Array.from(bytes)
@@ -25,7 +24,6 @@ function gerarSalt(): string {
     .join("");
 }
 
-// Gera hash SHA-256 de (salt + senha) e retorna "salt:hash"
 async function hashSenha(senha: string): Promise<string> {
   const salt = gerarSalt();
   const hash = await Crypto.digestStringAsync(
@@ -35,7 +33,6 @@ async function hashSenha(senha: string): Promise<string> {
   return salt + ":" + hash;
 }
 
-// Verifica se a senha bate com o hash armazenado no formato "salt:hash"
 async function verificarSenha(senha: string, senhaHash: string): Promise<boolean> {
   const partes = senhaHash.split(":");
   if (partes.length !== 2) return false;
@@ -129,7 +126,8 @@ export function UsuarioProvider({ children }: { children: React.ReactNode }) {
 
       const senhaValida = await verificarSenha(senha, usuario.senhaHash);
       if (senhaValida) {
-        autenticarPorCredenciais();
+        // Passa o nome do usuario para o AuthContext saber quem esta logado
+        autenticarPorCredenciais(nomeUsuario);
         await salvarUltimoUsuario(nomeUsuario);
       }
       return senhaValida;
